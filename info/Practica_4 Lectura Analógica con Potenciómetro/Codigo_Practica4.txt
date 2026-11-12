@@ -1,0 +1,34 @@
+#include <Arduino.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
+WebServer server(80);
+const int potPin = 34;
+
+const char* ssid = "TU_RED_WIFI";
+const char* password = "TU_CONTRASENA";
+
+void setup() {
+  Serial.begin(115200);
+  
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+  }
+  
+  server.on("/potenciometro", []() {
+    // Se calcula el voltaje multiplicando por el voltaje de referencia (3.3V) 
+    // y dividiendo entre la resolución del ADC del ESP32 (4095)
+    float voltaje = (analogRead(potPin) * 3.3) / 4095.0;
+    
+    // Se envía el resultado formateado a 2 decimales
+    String json = "{\"voltaje\": " + String(voltaje, 2) + "}";
+    server.send(200, "application/json", json);
+  });
+  
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+}
